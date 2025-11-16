@@ -67,11 +67,8 @@ async function main() {
         console.log('Confirmed navigation to Courses page!');
     }
 
-    console.log('At Courses page, taking screenshot...');
-    await page.screenshot({ path: 'courses-page.png' });
-
-    // ========== AGENTQL SCRAPING SECTION ========== //
     const coursesPageHtml = await page.content();
+    
     console.log('Sending Courses page HTML to AgentQL to extract all course titles and descriptions...');
     try {
         const response = await axios.post(
