@@ -37,7 +37,6 @@ async function main() {
     console.log(`Current URL: ${page.url()}`);
 
     if (!page.url().includes('logged-in-successfully')) {
-        // Try to check for success message on page to handle non-navigation SPA logins
         const content = await page.content();
         if (!content.includes('Congratulations student. You successfully logged in!')) {
             throw new Error('Login failed: Did not navigate to success page and success text not found!');
@@ -45,9 +44,23 @@ async function main() {
     }
     console.log('Login appears successful, navigating to Courses tab...');
 
+    await page.waitForSelector('a[href="https://practicetestautomation.com/courses/"]', { timeout: 20000 });
+    await page.click('a[href="https://practicetestautomation.com/courses/"]');
+
+    await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }).catch(e => {
+        console.warn('[Courses] Navigation (DOMContentLoaded) did not complete in time, checking URL directly');
+    });
+
+    if (!page.url().includes('courses')) {
+        console.warn('Did not reach Courses page by URL check, continuing anyway...');
+    } else {
+        console.log('Confirmed navigation to Courses page!');
+    }
+
     console.log('At Courses page, taking screenshot...');
     await page.screenshot({ path: 'courses-page.png' });
 
+    // --- AGENTQL scraping would start here ---
     console.log('Ready to use agentql on the courses page');
     await browser.close();
     console.log('Browser closed, script complete.');
