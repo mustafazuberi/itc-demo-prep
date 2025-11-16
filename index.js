@@ -1,8 +1,18 @@
 import puppeteer from 'puppeteer'
+import axios from 'axios'
 
 const url = 'https://practicetestautomation.com/practice-test-login/'
 const username = 'student'
 const password = 'Password123'
+const AGENTQL_API_KEY = '1tRXrX42PW5UEHO_fr5PBRiXfUrs4HHueS1z7o0D7fNs2qK8R0UoTw';
+
+// Now use list syntax to tell AgentQL to return an array of courses.
+const FIELDS_QUERY = `{
+  courses[] {
+    title(The main title of a course as displayed on the page.)
+    description(A visible description for the course, summary or details shown below or beside title.)
+  }
+}`;
 
 async function main() {
     console.log('Launching browser in headless mode, full HD window...');
@@ -60,8 +70,38 @@ async function main() {
     console.log('At Courses page, taking screenshot...');
     await page.screenshot({ path: 'courses-page.png' });
 
-    // --- AGENTQL scraping would start here ---
-    console.log('Ready to use agentql on the courses page');
+    // ========== AGENTQL SCRAPING SECTION ========== //
+    const coursesPageHtml = await page.content();
+    console.log('Sending Courses page HTML to AgentQL to extract all course titles and descriptions...');
+    try {
+        const response = await axios.post(
+            'https://api.agentql.com/v1/query-data',
+            {
+                query: FIELDS_QUERY,
+                html: coursesPageHtml,
+                params: { mode: 'fast' },
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': AGENTQL_API_KEY,
+                },
+            }
+        );
+        if (response.data && response.data.data && Array.isArray(response.data.data.courses)) {
+            console.log(`Found ${response.data.data.courses.length} course(s):`);
+            console.log("Here is the scraped courses list: ", response.data.data.courses);
+        } else {
+            console.log('AgentQL raw response:', response.data);
+        }
+    } catch (error) {
+        if (error.response) {
+            console.error('AgentQL API error:', error.response.data);
+        } else {
+            console.error('AgentQL call failed:', error.message);
+        }
+    }
+
     await browser.close();
     console.log('Browser closed, script complete.');
 }
