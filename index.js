@@ -17,7 +17,7 @@ const FIELDS_QUERY = `{
 async function main() {
     console.log('Launching browser in headless mode, full HD window...');
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: [
             '--window-size=1920,1080',
         ],
@@ -68,7 +68,7 @@ async function main() {
     }
 
     const coursesPageHtml = await page.content();
-    
+
     console.log('Sending Courses page HTML to AgentQL to extract all course titles and descriptions...');
     try {
         const response = await axios.post(
